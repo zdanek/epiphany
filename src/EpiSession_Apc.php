@@ -27,13 +27,19 @@ class EpiSession_Apc implements EpiSessionInterface
   {
     if(empty($key))
       return false;
-    
+
     $this->store[$key] = $value;
     apc_store($this->key, $this->store);
     return $value;
   }
 
-  public function __construct($params = null)
+  public function contains($key = null)
+  {
+    return isset($this->store[$key]);
+  }
+
+
+    public function __construct($params = null)
   {
     if(!empty($params))
       $key = array_shift($params);

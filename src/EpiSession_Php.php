@@ -25,12 +25,17 @@ class EpiSession_Php implements EpiSessionInterface
   {
     if(empty($key))
       return false;
-    
+
     $_SESSION[$key] = $value;
     return $value;
   }
 
-  public function __construct()
+  public function contains($key = null)
+  {
+    return isset($_SESSION[$key]);
+  }
+
+    public function __construct()
   {
     if (!session_id())
       session_start();

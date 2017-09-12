@@ -4,7 +4,7 @@
  *
  * This contains the EpiRoute class as wel as the EpiException abstract class
  * @author  Jaisen Mathai <jaisen@jmathai.com>
- * @version 1.0  
+ * @version 1.0
  * @package EpiRoute
  */
 
@@ -61,7 +61,7 @@ class EpiRoute
   {
     $this->addRoute($route, $callback, self::httpPut, $isApi);
   }
-  
+
   /**
    * delete('/', 'function');
    * @name  delete
@@ -98,7 +98,7 @@ class EpiRoute
     if(!file_exists($file))
     {
       EpiException::raise(new EpiException("Config file ({$file}) does not exist"));
-      break; // need to simulate same behavior if exceptions are turned off
+      return; // need to simulate same behavior if exceptions are turned off
     }
 
     $parsed_array = parse_ini_file($file, true);
@@ -111,9 +111,9 @@ class EpiRoute
         $this->$method($route['path'], $route['function']);
     }
   }
-  
+
   /**
-   * EpiRoute::run($_GET['__route__'], $_['routes']); 
+   * EpiRoute::run($_GET['__route__'], $_['routes']);
    * @name  run
    * @author  Jaisen Mathai <jaisen@jmathai.com>
    * @param string $route
@@ -135,7 +135,7 @@ class EpiRoute
       return $response;
     else
     {
-      // Only echo the response if it's not null. 
+      // Only echo the response if it's not null.
       if (!is_null($response))
       {
         $response = json_encode($response);
@@ -151,7 +151,7 @@ class EpiRoute
   }
 
   /**
-   * EpiRoute::getRoute($route); 
+   * EpiRoute::getRoute($route);
    * @name  getRoute
    * @author  Jaisen Mathai <jaisen@jmathai.com>
    * @param string $route
@@ -178,11 +178,14 @@ class EpiRoute
         {
           continue;
         }
-        else if(is_array($def['callback']) && method_exists($def['callback'][0], $def['callback'][1]))
+        else if(is_array($def['callback']))
         {
-          if(Epi::getSetting('debug'))
-            getDebug()->addMessage(__CLASS__, sprintf('Matched %s : %s : %s : %s', $httpMethod, $this->route, json_encode($def['callback']), json_encode($arguments)));
-          return array('callback' => $def['callback'], 'args' => $arguments, 'postprocess' => $def['postprocess']);
+            if (method_exists($def['callback'][0], $def['callback'][1]))
+            {
+              if(Epi::getSetting('debug'))
+                getDebug()->addMessage(__CLASS__, sprintf('Matched %s : %s : %s : %s', $httpMethod, $this->route, json_encode($def['callback']), json_encode($arguments)));
+              return array('callback' => $def['callback'], 'args' => $arguments, 'postprocess' => $def['postprocess']);
+            }
         }
         else if(function_exists($def['callback']))
         {
@@ -198,7 +201,7 @@ class EpiRoute
   }
 
   /**
-   * EpiRoute::redirect($url); 
+   * EpiRoute::redirect($url);
    * @name  redirect
    * @author  Jaisen Mathai <jaisen@jmathai.com>
    * @param string $url
@@ -225,6 +228,10 @@ class EpiRoute
   {
     return $this->route;
   }
+
+    public function matchingRoute() {
+        return isset($_GET[self::routeKey]) ? $_GET[self::routeKey] : '/';
+    }
 
   /*
    * EpiRoute::getInstance

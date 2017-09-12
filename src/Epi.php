@@ -20,7 +20,9 @@ class Epi
     'config' => array('base', 'EpiConfig.php'),
     'database' => array('base', 'EpiDatabase.php'),
     'debug' => array('EpiDebug.php'),
+    'logger' => array('EpiLogger.php'),
     'route'  => array('base', 'EpiRoute.php'),
+    'security'  => array('EpiSecurity.php'),
     'session' => array('base', 'EpiSession.php', 'session-php', 'session-apc', 'session-memcached'),
     'session-php' => array('base', 'EpiSession.php', 'EpiSession_Php.php'),
     'session-apc' => array('base', 'EpiSession.php', 'EpiSession_Apc.php'),
@@ -73,8 +75,13 @@ class Epi
     $value = isset(self::$manifest[$dep]) ? self::$manifest[$dep] : $dep;
     if(!is_array($value))
     {
-      if(!isset(self::$included[$value]))
+      if(!isset(self::$included[$value])) {
+        if (!file_exists(self::getPath('base') . "/{$value}")) {
+            print "not found" . self::getPath('base') . "/{$value}";
+        }
+
         include(self::getPath('base') . "/{$value}");
+      }
       self::$included[$value] = 1;
     }
     else

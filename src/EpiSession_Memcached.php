@@ -49,10 +49,15 @@ class EpiSession_Memcached implements EpiSessionInterface
   {
     if(!$this->connect() || empty($key))
       return false;
-    
+
     $this->store[$key] = $value;
     $this->memcached->set($this->key, $this->store);
     return $value;
+  }
+
+  public function contains($key = null)
+  {
+    return isset($this->store[$key]);
   }
 
   private function connect($params = null)

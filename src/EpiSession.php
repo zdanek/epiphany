@@ -46,16 +46,19 @@ class EpiSession
 
 interface EpiSessionInterface
 {
+//    TODO add destroy
   public function get($key = null);
   public function set($key = null, $value = null);
+  public function contains($key = null);
 }
 
 if(!function_exists('getSession'))
 {
+    //TODO optimize to create function returning already employed session
   function getSession()
   {
     $employ = EpiSession::employ();
-    $class = array_shift($employ);
+    $class = ($employ) ? array_shift($employ) : null;
     if($employ && class_exists($class))
       return EpiSession::getInstance($class, $employ);
     elseif(class_exists(EpiSession::PHP))
