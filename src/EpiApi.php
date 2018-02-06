@@ -28,14 +28,14 @@ class EpiApi
     if($visibility === self::external)
       getRoute()->post($route, $callback, true);
   }
-  
+
   public function put($route, $callback, $visibility = self::internal)
   {
     $this->addRoute($route, $callback, EpiRoute::httpPut);
     if($visibility === self::external)
       getRoute()->put($route, $callback, true);
   }
-  
+
   public function delete($route, $callback, $visibility = self::internal)
   {
     $this->addRoute($route, $callback, EpiRoute::httpDelete);
@@ -59,13 +59,13 @@ class EpiApi
 
     // restore sanity
     foreach($tmps as $type => $value)
-      $GLOBALS[$type] = $value; 
+      $GLOBALS[$type] = $value;
 
     return $retval;
   }
 
   /**
-   * EpiApi::getRoute($route); 
+   * EpiApi::getRoute($route);
    * @name  getRoute
    * @author  Jaisen Mathai <jaisen@jmathai.com>
    * @param string $route
@@ -116,6 +116,16 @@ class EpiApi
     $this->routes[] = array('httpMethod' => $method, 'path' => $route, 'callback' => $callback);
     $this->regexes[]= "#^{$route}\$#";
   }
+
+    public function isExternalApi($route) {
+        foreach ($this->routes as $apiRoute) {
+            if ($apiRoute['path'] == $route) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 function getApi()

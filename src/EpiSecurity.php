@@ -10,6 +10,8 @@ class EpiSecurity {
 
     private $loginUrl;
     private $endpoints = array();
+    private $endpointRoles = array();
+    private $endpointRoleMethods = array();
 
     /**
      * EpiSecurity constructor.
@@ -28,30 +30,59 @@ class EpiSecurity {
         $this->sessionAntiFixation();
         $this->sessionKillTimeouted();
 
-        if (array_key_exists(getRoute()->matchingRoute(), $this->endpoints)) {
-            if (!$this->endpoints[getRoute()->matchingRoute()]) {
-                getLogger()->info('Security: route ' . getRoute()->matchingRoute() . ' has anonymous access');
+        $route = getRoute()->matchingRoute();
+        $method = getRoute()->requestMethod();
+        getLogger()->info($route);
+
+        if (array_key_exists($route, $this->endpoints)) {
+            if (!$this->endpoints[$route]) {
+                getLogger()->info('Security: route ' . $route . ' has anonymous access');
                 return;
             }
         }
 
         if (getSession()->get(Constants::LOGGED_IN) == false) {
-            getLogger()->info("User not logged in. Route: " . var_export(getRoute()->matchingRoute(), true));
-            if (getRoute()->matchingRoute() == $this->loginUrl) {
+            getLogger()->info("User not logged in. Route: " . var_export($route, true));
+            if ($route == $this->loginUrl) {
                 getLogger()->info('During login, not redirecting');
             } else {
-                getRoute()->redirect($this->loginUrl);
+
+                if (getApi()->isExternalApi($route)) {
+                    getLogger()->info("external api " . $route);
+
+                    getRoute()->respondWihCode(401, "Please login");
+                } else {
+                    getRoute()->redirect($this->loginUrl);
+                }
+
+            }
+        }
+
+        if (array_key_exists($route, $this->endpointRoles)) {
+            $role = $this->endpointRoles[$route];
+            $securedHttpMethod = isset($this->endpointRoleMethods[$route]) ? $this->endpointRoleMethods[$route] : null;
+
+            if ($method == $securedHttpMethod && !in_array($role, $this->getPrincipal()->getRoles())) {
+                getRoute()->respondWihCode(401, "Insufficient ROLE to access this document");
             }
         }
 
         $this->sessionRefresh();
     }
 
-    public function role($requiredRole, $route) {
-        //TODO
+    public function role($requiredRole, $route, $httpMethod = null) {
+        $this->endpointRoles[$route] = $requiredRole;
+        //TODO fix this!
+        if ($httpMethod != null) {
+            $httpMethod = strtoupper($httpMethod);
+            if (!in_array($httpMethod, array('GET', 'POST', 'PUT', 'DELETE'))) {
+                EpiException::raise(new EpiException("Wrong HTTP Request method {$httpMethod}"));
+            }
+            $this->endpointRoleMethods[$route] = $httpMethod;
+        }
     }
 
-    public function authenticate($principal) {
+    public function authenticate(EpiSecurityPrincipal $principal) {
         getSession()->set(EpiSecurity::PRINCIPAL_KEY, $principal);
         getSession()->set(Constants::LOGGED_IN, true);
     }
@@ -75,7 +106,7 @@ class EpiSecurity {
     private function sessionAntiFixation() {
         if (!getSession()->contains(Constants::SESSION_CREATION_TS)) {
             getSession()->set(Constants::SESSION_CREATION_TS, time());
-            getLogger()->info("Session CRATION TS stored");
+            getLogger()->info("Session CREATION TS stored");
         } else if (time() - getSession()->get(Constants::SESSION_CREATION_TS) > self::SESSION_FIXATION_TIMEOUT) {
             session_regenerate_id(false);
             getLogger()->info("Session antifixation. New session ID " + session_id());
@@ -103,6 +134,9 @@ class EpiSecurity {
     private function sessionRefresh() {
         getSession()->set(Constants::SESSION_LAST_ACTIVE, time());
     }
+
+    public function requireRole($string) {
+    }
 }
 
 interface EpiSecurityPrincipal {
@@ -115,6 +149,15 @@ interface EpiSecurityPrincipal {
      * @return mixed
      */
     public function getPasswordExpiryTimestamp();
+
+    /**
+     * Returns array of roles.
+     *
+     * Each role is a String.
+     *
+     * @return array Roles of type String
+     */
+    public function getRoles();
 }
 
 function getSecurity()

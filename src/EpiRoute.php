@@ -130,7 +130,13 @@ class EpiRoute
       $httpMethod = $_SERVER['REQUEST_METHOD'];
     $routeDef = $this->getRoute($route, $httpMethod);
 
-    $response = call_user_func_array($routeDef['callback'], $routeDef['args']);
+    try {
+        $response = call_user_func_array($routeDef['callback'], $routeDef['args']);
+    } catch (EpiErrorResponseException $e) {
+        getLogger()->info('Error', $e);
+        http_response_code($e->error->code);
+        $response = $e;
+    }
     if(!$routeDef['postprocess'])
       return $response;
     else
@@ -216,13 +222,27 @@ class EpiRoute
 
     if($continue)
     {
-      if($code != null && (int)$code == $code)
+      if($code != null && (int)$code == $code) {
+          //TODO why is this Status header? this is not valid header. Shouldn't it be "Status Code:" ?
         header("Status: {$code}");
+      }
       header("Location: {$url}");
       die();
     }
     EpiException::raise(new EpiException("Redirect to {$url} failed"));
   }
+
+    public function respondWihCode($code, $status = null) {
+        if($code != null && (int)$code == $code) {
+//            header("Status: {$code}");
+            http_response_code($code);
+            print $status;
+
+            die();
+        }
+
+        EpiException::raise(new EpiException("Response failed {$code} / [{$status}]"));
+    }
 
   public function route()
   {
@@ -232,6 +252,11 @@ class EpiRoute
     public function matchingRoute() {
         return isset($_GET[self::routeKey]) ? $_GET[self::routeKey] : '/';
     }
+
+    public function requestMethod() {
+        return $_SERVER['REQUEST_METHOD'];
+    }
+
 
   /*
    * EpiRoute::getInstance

@@ -6,7 +6,7 @@ class EpiDatabase
   private $_type, $_name, $_host, $_user, $_pass, $_port;
   public $dbh;
   private function __construct(){}
-  
+
   public static function getInstance($type, $name, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
   {
     $args = func_get_args();
@@ -23,7 +23,7 @@ class EpiDatabase
     self::$instances[$hash]->_port = $port;
     return self::$instances[$hash];
   }
-  
+
   public function execute($sql = false, $params = array())
   {
     $this->init();
@@ -41,7 +41,7 @@ class EpiDatabase
       return false;
     }
   }
-  
+
   public function insertId()
   {
     $this->init();
@@ -51,7 +51,7 @@ class EpiDatabase
     }
     return false;
   }
-  
+
   public function all($sql = false, $params = array())
   {
     $this->init();
@@ -66,7 +66,7 @@ class EpiDatabase
       return false;
     }
   }
-  
+
   public function one($sql = false, $params = array())
   {
     $this->init();
@@ -80,6 +80,24 @@ class EpiDatabase
       EpiException::raise(new EpiDatabaseQueryException("Query error: {$e->getMessage()} - {$sql}"));
       return false;
     }
+  }
+
+  public function beginTransaction()
+  {
+    $this->init();
+    $this->dbh->beginTransaction();
+  }
+
+  public function commitTransaction()
+  {
+      $this->init();
+      $this->dbh->commit();
+  }
+
+  public function rollbackTransaction()
+  {
+      $this->init();
+      $this->dbh->rollback();
   }
 
   public static function employ($type = null, $name = null, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
