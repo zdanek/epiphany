@@ -60,7 +60,16 @@ class EpiSession_Memcached implements EpiSessionInterface
     return isset($this->store[$key]);
   }
 
-  private function connect($params = null)
+  public function getId() {
+      EpiException::raise("not implemented");
+  }
+
+  public function destroy()
+  {
+      EpiException::raise("not implemented");
+  }
+
+    private function connect($params = null)
   {
     if(self::$connected)
       return true;

@@ -50,6 +50,8 @@ interface EpiSessionInterface
   public function get($key = null);
   public function set($key = null, $value = null);
   public function contains($key = null);
+  public function getId();
+  public function destroy();
 }
 
 if(!function_exists('getSession'))

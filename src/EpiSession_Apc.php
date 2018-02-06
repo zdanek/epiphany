@@ -39,7 +39,7 @@ class EpiSession_Apc implements EpiSessionInterface
   }
 
 
-    public function __construct($params = null)
+  public function __construct($params = null)
   {
     if(!empty($params))
       $key = array_shift($params);
@@ -49,5 +49,14 @@ class EpiSession_Apc implements EpiSessionInterface
 
     $this->key = empty($key) ? $_COOKIE[EpiSession::COOKIE] : $key;
     $this->store = $this->getAll();
+  }
+
+  public function getId() {
+      EpiException::raise("not implemented");
+  }
+
+  public function destroy()
+  {
+      EpiException::raise("not implemented");
   }
 }

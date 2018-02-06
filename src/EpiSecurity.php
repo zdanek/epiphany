@@ -32,7 +32,7 @@ class EpiSecurity {
 
         $route = getRoute()->matchingRoute();
         $method = getRoute()->requestMethod();
-        getLogger()->info($route);
+//        getLogger()->info($route);
 
         if (array_key_exists($route, $this->endpoints)) {
             if (!$this->endpoints[$route]) {
@@ -83,16 +83,13 @@ class EpiSecurity {
     }
 
     public function authenticate(EpiSecurityPrincipal $principal) {
+        getLogger()->info("Authenticating user ");
         getSession()->set(EpiSecurity::PRINCIPAL_KEY, $principal);
         getSession()->set(Constants::LOGGED_IN, true);
     }
 
     public function logout() {
-        //TODO consider unsetting
-        getSession()->set(EpiSecurity::PRINCIPAL_KEY, null);
-        getSession()->set(Constants::LOGGED_IN, false);
-        getSession()->set(Constants::SESSION_CREATION_TS, 0);
-        getSession()->set(Constants::SESSION_LAST_ACTIVE, 0);
+        getSession()->destroy();
     }
 
     public function getPrincipal() {
@@ -109,7 +106,7 @@ class EpiSecurity {
             getLogger()->info("Session CREATION TS stored");
         } else if (time() - getSession()->get(Constants::SESSION_CREATION_TS) > self::SESSION_FIXATION_TIMEOUT) {
             session_regenerate_id(false);
-            getLogger()->info("Session antifixation. New session ID " + session_id());
+            getLogger()->info("Session antifixation. New session ID " . session_id());
             getSession()->set(Constants::SESSION_CREATION_TS, time());
         }
     }
@@ -140,6 +137,14 @@ class EpiSecurity {
 }
 
 interface EpiSecurityPrincipal {
+
+    /**
+     * User id.
+     *
+     * @return mixed
+     */
+    public function getId();
+
     /**
      * Unix timestamp when password expires.
      *

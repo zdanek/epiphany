@@ -6,4 +6,3 @@ class Constants {
     const SESSION_LAST_ACTIVE = 'session_last_active';
 }
 
-?>
