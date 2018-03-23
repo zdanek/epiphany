@@ -133,9 +133,12 @@ class EpiRoute
     try {
         $response = call_user_func_array($routeDef['callback'], $routeDef['args']);
     } catch (EpiErrorResponseException $e) {
-        getLogger()->info('Error', $e);
+        getLogger()->crit('Error', $e);
         http_response_code($e->error->code);
         $response = $e;
+    } catch (Exception $e) {
+        getLogger()->crit('Error', $e);
+        throw $e;
     }
     if(!$routeDef['postprocess'])
       return $response;
