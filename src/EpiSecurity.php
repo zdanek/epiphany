@@ -41,8 +41,11 @@ class EpiSecurity {
             }
         }
 
+        getLogger()->debug('This route is secured. Checking if user is logged in');
+
         if (getSession()->get(Constants::LOGGED_IN) == false) {
             getLogger()->info("User not logged in. Route: " . var_export($route, true));
+            getLogger()->debug('Checking if current url is loginUrl');
             if ($route == $this->loginUrl) {
                 getLogger()->info('During login, not redirecting');
             } else {
@@ -52,17 +55,18 @@ class EpiSecurity {
 
                     getRoute()->respondWihCode(401, "Please login");
                 } else {
+                    getLogger()->info('Current URL is not logging url. Redirecting to loggin url');
                     getRoute()->redirect($this->loginUrl);
                 }
 
             }
         }
-
         if (array_key_exists($route, $this->endpointRoles)) {
-            $role = $this->endpointRoles[$route];
-            $securedHttpMethod = isset($this->endpointRoleMethods[$route]) ? $this->endpointRoleMethods[$route] : null;
 
-            if ($method == $securedHttpMethod && !in_array($role, $this->getPrincipal()->getRoles())) {
+            $role = $this->endpointRoles[$route];
+            $securedHttpMethod = isset($this->endpointRoleMethods[$route]) ? $this->endpointRoleMethods[$route] : 'ALL';
+getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // user roles: ' . var_export($this->getPrincipal()->getRoles(), true));
+            if ((($securedHttpMethod != null && $method == $securedHttpMethod) || ($securedHttpMethod == 'ALL'))  && !in_array($role, $this->getPrincipal()->getRoles())) {
                 getRoute()->respondWihCode(401, "Insufficient ROLE to access this document");
             }
         }
@@ -83,7 +87,8 @@ class EpiSecurity {
     }
 
     public function authenticate(EpiSecurityPrincipal $principal) {
-        getLogger()->info("Authenticating user ");
+        getLogger()->info("Authenticating user " . $principal->getId());
+
         getSession()->set(EpiSecurity::PRINCIPAL_KEY, $principal);
         getSession()->set(Constants::LOGGED_IN, true);
     }
