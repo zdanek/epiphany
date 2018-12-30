@@ -2,7 +2,8 @@
 
 class EpiRequest {
 
-    const APP_JSON = 'application/json';
+    public const APP_JSON = 'application/json';
+
     private static $instance;
 
     public static function getInstance() {
@@ -43,6 +44,8 @@ class EpiRequest {
 
         $log->debug("initializing " . $class . ' with args ' . var_export($args, true));
         $obj = $refl->newInstanceArgs($args);
+
+        return $obj;
     }
 
     public function contentType() {
