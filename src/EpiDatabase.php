@@ -100,7 +100,13 @@ class EpiDatabase
       $this->dbh->rollback();
   }
 
-  public static function employ($type = null, $name = null, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
+  public function inTransaction()
+  {
+      $this->init();
+      return $this->dbh->inTransaction();
+  }
+
+    public static function employ($type = null, $name = null, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
   {
     if(!empty($type) && !empty($name))
     {
