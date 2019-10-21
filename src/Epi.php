@@ -22,6 +22,7 @@ class Epi
     'debug' => array('EpiDebug.php'),
     'logger' => array('EpiLogger.php'),
     'route'  => array('base', 'EpiRoute.php'),
+    'request' => array('EpiRequest.php'),
     'security'  => array('EpiSecurity.php'),
     'session' => array('base', 'EpiSession.php', 'session-php', 'session-apc', 'session-memcached'),
     'session-php' => array('base', 'EpiSession.php', 'EpiSession_Php.php'),

@@ -24,6 +24,10 @@ class EpiConfig
       }
 
       $parsed_array = parse_ini_file($file, true);
+      if ($parsed_array === false) {
+          EpiException::raise(new EpiConfigException("Config file ({$file}) parsing error"));
+      }
+
       foreach($parsed_array as $key => $value)
       {
         if(!is_array($value))
@@ -64,7 +68,7 @@ class EpiConfig
 
     self::$instance = new EpiConfig;
     return self::$instance;
-  }  
+  }
 }
 
 function getConfig()

@@ -13,5 +13,11 @@ class EpiErrorResponseException extends EpiException {
         $this->error = $error;
     }
 
+    /**
+     * @return ErrorResponse
+     */
+    public function getError(): ErrorResponse {
+        return $this->error;
+    }
 
 }

@@ -143,7 +143,8 @@ class EpiDatabase
 
     try
     {
-      $this->dbh = new PDO($this->_type . ':host=' . $this->_host . ';dbname=' . $this->_name. ';port=' . $this->_port, $this->_user, $this->_pass);
+      $options = array(PDO::MYSQL_ATTR_FOUND_ROWS => true);
+      $this->dbh = new PDO($this->_type . ':host=' . $this->_host . ';dbname=' . $this->_name. ';port=' . $this->_port, $this->_user, $this->_pass, $options);
       $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
     catch(Exception $e)
