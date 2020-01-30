@@ -56,6 +56,7 @@ class EpiSecurity {
                     getRoute()->respondWihCode(401, "Please login");
                 } else {
                     getLogger()->info('Current URL is not logging url. Redirecting to loggin url');
+                    $this->setRedirectionAfterLogin();
                     getRoute()->redirect($this->loginUrl);
                 }
 
@@ -105,6 +106,10 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
         $this->endpoints[$route] = $secured;
     }
 
+    public function getRedirectionUrlAfterLogin() {
+        return getSession()->get(Constants::REDIRECT_AFTER_LOGIN);
+    }
+    
     private function sessionAntiFixation() {
         if (!getSession()->contains(Constants::SESSION_CREATION_TS)) {
             getSession()->set(Constants::SESSION_CREATION_TS, time());
@@ -137,7 +142,14 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
         getSession()->set(Constants::SESSION_LAST_ACTIVE, time());
     }
 
-    public function requireRole($string) {
+    private function setRedirectionAfterLogin() {
+        $httpMethod = $_SERVER['REQUEST_METHOD'];
+        if ($httpMethod == 'GET') {
+            getSession()->set(Constants::REDIRECT_AFTER_LOGIN, $_SERVER['REQUEST_URI']);
+        } else {
+
+        }
+        getSession()->set(Constants::REDIRECT_AFTER_LOGIN, $_SERVER['REQUEST_URI']);
     }
 }
 

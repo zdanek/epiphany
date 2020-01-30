@@ -52,6 +52,7 @@ interface EpiSessionInterface
   public function contains($key = null);
   public function getId();
   public function destroy();
+  public function unset($key);
 }
 
 if(!function_exists('getSession'))

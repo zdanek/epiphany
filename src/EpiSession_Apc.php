@@ -59,4 +59,8 @@ class EpiSession_Apc implements EpiSessionInterface
   {
       EpiException::raise("not implemented");
   }
+  public function unset($key)
+  {
+      EpiException::raise("not implemented");
+  }
 }

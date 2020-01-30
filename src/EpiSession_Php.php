@@ -50,4 +50,11 @@ class EpiSession_Php implements EpiSessionInterface
   {
       session_destroy();
   }
+
+  public function unset($key)
+  {
+      if ($this->contains($key)) {
+          unset($_SESSION[$key]);
+      }
+  }
 }

@@ -69,6 +69,11 @@ class EpiSession_Memcached implements EpiSessionInterface
       EpiException::raise("not implemented");
   }
 
+  public function unset($key)
+  {
+      EpiException::raise("not implemented");
+  }
+
     private function connect($params = null)
   {
     if(self::$connected)
