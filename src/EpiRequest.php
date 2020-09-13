@@ -91,6 +91,11 @@ class EpiRequest {
         $log->debug("initializing " . $class . ' with args ' . var_export($args, true));
         $obj = $refl->newInstanceArgs($args);
 
+        $fixItf = 'FieldFix';
+        if ($obj instanceof $fixItf) {
+            $obj->fix();
+        }
+
         return $obj;
     }
 
