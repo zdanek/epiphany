@@ -16,17 +16,19 @@
  */
 class EpiRoute
 {
-  private static $instance;
-  private $routes = array();
-  private $regexes= array();
-  private $route = null;
-  const routeKey= '__route__';
-  const httpGet = 'GET';
-  const httpPost= 'POST';
-  const httpPut = 'PUT';
-  const httpDelete = 'DELETE';
+    private static $instance;
+    private $routes = array();
+    private $regexes= array();
+    private $route = null;
+    const routeKey= '__route__';
+    const httpGet = 'GET';
+    const httpPost= 'POST';
+    const httpPut = 'PUT';
+    const httpDelete = 'DELETE';
+    public const STATUS_SEE_OTHER = 303;
+    public const STATUS_TEMP_REDIRECT = 302;
 
-  /**
+    /**
    * get('/', 'function');
    * @name  get
    * @author  Jaisen Mathai <jaisen@jmathai.com>
@@ -169,6 +171,7 @@ class EpiRoute
    */
   public function getRoute($route = false, $httpMethod = null)
   {
+      getLogger(__CLASS__)->debug('Matching route ['.$route.']');
     if($route)
       $this->route = $route;
     else
@@ -206,7 +209,13 @@ class EpiRoute
         EpiException::raise(new EpiException('Could not call ' . json_encode($def) . " for route {$regex}"));
       }
     }
-    EpiException::raise(new EpiException("Could not find route {$this->route} from {$_SERVER['REQUEST_URI']}"));
+
+    if (Epi::getSetting('404Path')) {
+        getRoute()->redirect(Epi::getSetting('404Path'));
+    } else {
+        EpiException::raise(new EpiException("Could not find route {$this->route} from {$_SERVER['REQUEST_URI']}"));
+    }
+
   }
 
   /**
@@ -225,17 +234,17 @@ class EpiRoute
 
     if($continue)
     {
-      if($code != null && (int)$code == $code) {
           //TODO why is this Status header? this is not valid header. Shouldn't it be "Status Code:" ?
-        header("Status: {$code}");
-      }
-      header("Location: {$url}");
+//      if($code != null && (int)$code == $code) {
+//        header("Status: {$code}");
+//      }
+      header("Location: {$url}", true, $code);
       die();
     }
-    EpiException::raise(new EpiException("Redirect to {$url} failed"));
+    EpiException::raise(new EpiException("Redirect to [{$url}] failed"));
   }
 
-    public function respondWihCode($code, $status = null) {
+    public function respondWithCode($code, $status = null) {
         if($code != null && (int)$code == $code) {
 //            header("Status: {$code}");
             http_response_code($code);

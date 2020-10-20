@@ -46,7 +46,6 @@ class EpiSession
 
 interface EpiSessionInterface
 {
-//    TODO add destroy
   public function get($key = null);
   public function set($key = null, $value = null);
   public function contains($key = null);

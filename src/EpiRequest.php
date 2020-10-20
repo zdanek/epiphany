@@ -3,6 +3,7 @@
 class EpiRequest {
 
     public const APP_JSON = 'application/json';
+    public const FORM_URL_ENCODED = 'application/x-www-form-urlencoded';
 
     private static $instance;
 
@@ -16,7 +17,7 @@ class EpiRequest {
     }
 
     public function get($class, $containingParam = null) {
-        $data = $this->getJsonData();
+        $data = $this->getData();
 
         if ($containingParam && $data && is_array($data) && array_key_exists($containingParam, $data) && is_array($data[$containingParam])) {
             $data = $data[$containingParam];
@@ -29,7 +30,7 @@ class EpiRequest {
 
     public function getArrayOf($class) {
 
-        $data = $this->getJsonData();
+        $data = $this->getData();
 
         if (!is_array($data)) {
             throw new Exception("Data is not an array.");
@@ -45,6 +46,23 @@ class EpiRequest {
 
         return $resp;
     }
+
+    private function getData() {
+        if ($this->contentType() == self::APP_JSON) {
+            return $this->getJsonData();
+        } else if ($this->contentType() == self::FORM_URL_ENCODED) {
+            return $this->getFormData();
+        }
+
+        else {
+            throw new Exception("Not supported type " . $this->contentType());
+        }
+    }
+
+    private function getFormData() {
+        return $_POST;
+    }
+
     private function getJsonData() {
         if ($this->contentType() == self::APP_JSON) {
             return json_decode(file_get_contents('php://input'), true);
@@ -110,6 +128,9 @@ class EpiRequest {
         return null;
     }
 
+    public function getPath() {
+        return $_SERVER['REQUEST_URI'];
+    }
 }
 
 function getRequest() {

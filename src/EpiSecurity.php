@@ -9,7 +9,8 @@ class EpiSecurity {
     const ENABLED = true;
 
     private $loginUrl;
-    private $endpoints = array();
+    private $endpointsSecured = array();
+    private $endpointsSecuredRegex = array();
     private $endpointRoles = array();
     private $endpointRoleMethods = array();
 
@@ -18,8 +19,10 @@ class EpiSecurity {
      * @param $loginUrl
      */
     public function __construct() {
-        //TODO check if exists loginPath settigns
         $this->loginUrl = Epi::getSetting('loginPath');
+        if (!$this->loginUrl) {
+            EpiException::raise(new EpiException("loginUrl not set in settings"));
+        }
     }
 
     public function check() {
@@ -34,11 +37,8 @@ class EpiSecurity {
         $method = getRoute()->requestMethod();
 //        getLogger()->info($route);
 
-        if (array_key_exists($route, $this->endpoints)) {
-            if (!$this->endpoints[$route]) {
-                getLogger()->info('Security: route ' . $route . ' has anonymous access');
-                return;
-            }
+        if ($this->hasAnonymousAccess($route)) {
+            return;
         }
 
         getLogger()->debug('This route is secured. Checking if user is logged in');
@@ -53,7 +53,7 @@ class EpiSecurity {
                 if (getApi()->isExternalApi($route)) {
                     getLogger()->info("external api " . $route);
 
-                    getRoute()->respondWihCode(401, "Please login");
+                    getRoute()->respondWithCode(401, "Please login");
                 } else {
                     getLogger()->info('Current URL is not logging url. Redirecting to loggin url');
                     $this->setRedirectionAfterLogin();
@@ -68,7 +68,7 @@ class EpiSecurity {
             $securedHttpMethod = isset($this->endpointRoleMethods[$route]) ? $this->endpointRoleMethods[$route] : 'ALL';
 getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // user roles: ' . var_export($this->getPrincipal()->getRoles(), true));
             if ((($securedHttpMethod != null && $method == $securedHttpMethod) || ($securedHttpMethod == 'ALL'))  && !in_array($role, $this->getPrincipal()->getRoles())) {
-                getRoute()->respondWihCode(401, "Insufficient ROLE to access this document");
+                getRoute()->respondWithCode(401, "Insufficient ROLE to access this document");
             }
         }
 
@@ -98,18 +98,48 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
         getSession()->destroy();
     }
 
-    public function getPrincipal() {
+    public function getPrincipal() : ?EpiSecurityPrincipal {
         return (getSession()->contains(EpiSecurity::PRINCIPAL_KEY)) ? getSession()->get(EpiSecurity::PRINCIPAL_KEY) : null;
     }
 
+    public function isLoggedIn() {
+        return getSession()->contains(Constants::LOGGED_IN) && getSession()->get(Constants::LOGGED_IN);
+    }
+
     public function configEndpoint($route, $secured = true) {
-        $this->endpoints[$route] = $secured;
+        $this->endpointsSecured[$route] = $secured;
+    }
+
+    public function configEndpointRegex($routeRegex, $secured = true) {
+        $route = "#^{$routeRegex}\$#";
+        $this->endpointsSecuredRegex[$route] = $secured;
     }
 
     public function getRedirectionUrlAfterLogin() {
         return getSession()->get(Constants::REDIRECT_AFTER_LOGIN);
     }
-    
+
+    private function hasAnonymousAccess($route) {
+
+        if (Epi::getSetting('404Path') && $route == Epi::getSetting('404Path')) {
+            return true;
+        }
+
+        if (array_key_exists($route, $this->endpointsSecured)) {
+            if (!$this->endpointsSecured[$route]) {
+                getLogger()->info('Security: route ' . $route . ' has anonymous access');
+                return true;
+            }
+        }
+
+        foreach ($this->endpointsSecuredRegex as $endpointRegex => $isSecured) {
+            if (preg_match($endpointRegex, $route)) {
+                return !$isSecured;
+            }
+        }
+        return false;
+    }
+
     private function sessionAntiFixation() {
         if (!getSession()->contains(Constants::SESSION_CREATION_TS)) {
             getSession()->set(Constants::SESSION_CREATION_TS, time());
@@ -182,7 +212,7 @@ interface EpiSecurityPrincipal {
     public function getRoles();
 }
 
-function getSecurity()
+function getSecurity() : EpiSecurity
 {
     static $security;
     if (!$security) {
