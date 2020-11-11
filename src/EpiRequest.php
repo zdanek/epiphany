@@ -89,14 +89,14 @@ class EpiRequest {
 
     private function initFrom($data, $class) {
         $log = getLogger(__CLASS__);
+        if ($data == null) {
+            return null;
+        }
         $refl = new ReflectionClass($class);
         if (!$refl->isInstantiable()) {
             throw new Exception($class . ' is not instantable');
         }
 
-        if ($data == null) {
-            return null;
-        }
 
         $args = [];
         $constr = $refl->getConstructor();
@@ -105,8 +105,8 @@ class EpiRequest {
                 $args[] = isset($data[$p->getName()]) ? $data[$p->getName()] : null;
             }
         }
-
-        $log->debug("initializing " . $class . ' with args ' . var_export($args, true));
+//TODO tunded off because login and password were logged
+//        $log->debug("initializing " . $class . ' with args ' . var_export($args, true));
         $obj = $refl->newInstanceArgs($args);
 
         $fixItf = 'FieldFix';

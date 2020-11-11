@@ -2,12 +2,12 @@
 class EpiDatabase
 {
   const MySql = 'mysql';
-  private static $instances = array(), $type, $name, $host, $user, $pass, $port;
-  private $_type, $_name, $_host, $_user, $_pass, $_port;
+  private static $instances = array(), $type, $name, $host, $user, $pass, $port, $charset;
+  private $_type, $_name, $_host, $_user, $_pass, $_port, $_charset;
   public $dbh;
   private function __construct(){}
 
-  public static function getInstance($type, $name, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
+  public static function getInstance($type, $name, $host = 'localhost', $user = 'root', $pass = '', $port = 3306, $charset = 'utf8mb4')
   {
     $args = func_get_args();
     $hash = md5(implode('~', $args));
@@ -21,6 +21,7 @@ class EpiDatabase
     self::$instances[$hash]->_user = $user;
     self::$instances[$hash]->_pass = $pass;
     self::$instances[$hash]->_port = $port;
+    self::$instances[$hash]->_charset = $charset;
     return self::$instances[$hash];
   }
 
@@ -106,7 +107,7 @@ class EpiDatabase
       return $this->dbh->inTransaction();
   }
 
-    public static function employ($type = null, $name = null, $host = 'localhost', $user = 'root', $pass = '', $port = 3306)
+    public static function employ($type = null, $name = null, $host = 'localhost', $user = 'root', $pass = '', $port = 3306, $charset = 'utf8')
   {
     if(!empty($type) && !empty($name))
     {
@@ -116,9 +117,10 @@ class EpiDatabase
       self::$user = $user;
       self::$pass = $pass;
       self::$port = $port;
+      self::$charset = $charset;
     }
 
-    return array('type' => self::$type, 'name' => self::$name, 'host' => self::$host, 'user' => self::$user, 'pass' => self::$pass, 'port' => self::$port);
+    return array('type' => self::$type, 'name' => self::$name, 'host' => self::$host, 'user' => self::$user, 'pass' => self::$pass, 'port' => self::$port, 'charset' => self::$charset);
   }
 
   private function prepare($sql, $params = array())
@@ -143,13 +145,13 @@ class EpiDatabase
 
     try
     {
-      $options = array(PDO::MYSQL_ATTR_FOUND_ROWS => true);
-      $this->dbh = new PDO($this->_type . ':host=' . $this->_host . ';dbname=' . $this->_name. ';port=' . $this->_port, $this->_user, $this->_pass, $options);
+      $options = array(PDO::MYSQL_ATTR_FOUND_ROWS => true, PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'');
+      $this->dbh = new PDO($this->_type . ':host=' . $this->_host . ';dbname=' . $this->_name . ';port=' . $this->_port . ';charset=' . $this->_charset, $this->_user, $this->_pass, $options);
       $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
     catch(Exception $e)
     {
-      EpiException::raise(new EpiDatabaseConnectionException('Could not connect to database'));
+      EpiException::raise(new EpiDatabaseConnectionException('Could not connect to database: ' . $e->getMessage()));
     }
   }
 }
@@ -160,5 +162,5 @@ function getDatabase()
   if(empty($type) || empty($name) || empty($host) || empty($user))
     EpiException::raise(new EpiCacheTypeDoesNotExistException('Could not determine which database module to load', 404));
   else
-    return EpiDatabase::getInstance($type, $name, $host, $user, $pass, $port);
+    return EpiDatabase::getInstance($type, $name, $host, $user, $pass, $port, $charset);
 }

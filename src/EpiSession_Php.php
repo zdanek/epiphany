@@ -5,8 +5,8 @@ class EpiSession_Php implements EpiSessionInterface
   {
     $_SESSION = array();
 
-    if (isset($_COOKIE[session_name()]))
-    {
+    if (isset($_COOKIE[session_name()])) {
+        //for security sake, setting time in the past, so browser will clean this cookie
         setcookie(session_name(), '', time()-42000, '/');
     }
 
@@ -57,4 +57,11 @@ class EpiSession_Php implements EpiSessionInterface
           unset($_SESSION[$key]);
       }
   }
+
+    private function getSessionTimeout() {
+
+        $timeoutSetting = Epi::getSetting(self::SESSION_INACTIVE_TIMEOUT_KEY);
+        return $timeoutSetting ? $timeoutSetting : EpiSecurity::SESSION_INACTIVE_TIMEOUT;
+    }
+
 }

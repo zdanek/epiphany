@@ -6,6 +6,8 @@ class EpiSecurity {
     //TODO change to config and to proper val
     const SESSION_FIXATION_TIMEOUT = 12000;
     const SESSION_INACTIVE_TIMEOUT = 3072;
+    const LOGIN_PATH_KEY = 'loginPath';
+    const SESSION_INACTIVE_TIMEOUT_KEY = 'SESSION_TIMEOUT';
     const ENABLED = true;
 
     private $loginUrl;
@@ -19,7 +21,7 @@ class EpiSecurity {
      * @param $loginUrl
      */
     public function __construct() {
-        $this->loginUrl = Epi::getSetting('loginPath');
+        $this->loginUrl = Epi::getSetting(self::LOGIN_PATH_KEY);
         if (!$this->loginUrl) {
             EpiException::raise(new EpiException("loginUrl not set in settings"));
         }
@@ -30,12 +32,13 @@ class EpiSecurity {
             return;
         }
 
-        $this->sessionAntiFixation();
+//        $this->sessionAntiFixation();
         $this->sessionKillTimeouted();
+
+        $this->sessionRefresh();
 
         $route = getRoute()->matchingRoute();
         $method = getRoute()->requestMethod();
-//        getLogger()->info($route);
 
         if ($this->hasAnonymousAccess($route)) {
             return;
@@ -72,7 +75,7 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
             }
         }
 
-        $this->sessionRefresh();
+
     }
 
     public function role($requiredRole, $route, $httpMethod = null) {
@@ -141,12 +144,13 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
     }
 
     private function sessionAntiFixation() {
+        getLogger(__CLASS__)->debug('SessionAntifixation.');
         if (!getSession()->contains(Constants::SESSION_CREATION_TS)) {
             getSession()->set(Constants::SESSION_CREATION_TS, time());
-            getLogger()->info("Session CREATION TS stored");
+            getLogger(__CLASS__)->info("CREATION TS not found. Storing currents ts.");
         } else if (time() - getSession()->get(Constants::SESSION_CREATION_TS) > self::SESSION_FIXATION_TIMEOUT) {
             session_regenerate_id(false);
-            getLogger()->info("Session antifixation. New session ID " . session_id());
+            getLogger(__CLASS__)->info("Recreating new session ID: " . session_id());
             getSession()->set(Constants::SESSION_CREATION_TS, time());
         }
     }
@@ -158,7 +162,7 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
         if (!getSession()->contains(Constants::SESSION_LAST_ACTIVE)) {
             return;
         }
-        if (time() > getSession()->get(Constants::SESSION_LAST_ACTIVE) + EpiSecurity::SESSION_INACTIVE_TIMEOUT) {
+        if (time() > getSession()->get(Constants::SESSION_LAST_ACTIVE) + $this->getSessionTimeout()) {
             $this->logout();
         }
     }
@@ -180,6 +184,12 @@ getLogger()->info('sec meth ' . $securedHttpMethod . ', role ' . $role . ' // us
 
         }
         getSession()->set(Constants::REDIRECT_AFTER_LOGIN, $_SERVER['REQUEST_URI']);
+    }
+
+    private function getSessionTimeout() {
+
+        $timeoutSetting = Epi::getSetting(self::SESSION_INACTIVE_TIMEOUT_KEY);
+        return $timeoutSetting ? $timeoutSetting : EpiSecurity::SESSION_INACTIVE_TIMEOUT;
     }
 }
 

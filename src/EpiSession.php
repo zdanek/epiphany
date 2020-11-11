@@ -57,8 +57,8 @@ interface EpiSessionInterface
 if(!function_exists('getSession'))
 {
     //TODO optimize to create function returning already employed session
-  function getSession()
-  {
+  function getSession() : EpiSessionInterface {
+
     $employ = EpiSession::employ();
     $class = ($employ) ? array_shift($employ) : null;
     if($employ && class_exists($class))
